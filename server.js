@@ -26,7 +26,7 @@ app.all("/api/dust", async (req, res) => {
   }
   if (!apiKey) return res.status(401).json({ error: "Missing Dust API key" });
 
-  const dustUrl = `https://dust.tt/api/v1${decodeURIComponent(path)}`;
+  const dustUrl = `https://eu.dust.tt/api/v1${decodeURIComponent(path)}`;
 
   try {
     const dustRes = await fetch(dustUrl, {
