@@ -8,7 +8,7 @@ app.use(express.json());
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Dust-Api-Key");
   if (req.method === "OPTIONS") return res.status(200).end();
   next();
 });
@@ -18,8 +18,13 @@ app.all("/api/dust", async (req, res) => {
   const { path } = req.query;
   if (!path) return res.status(400).json({ error: "Missing path parameter" });
 
-  const authHeader = req.headers["authorization"];
-  if (!authHeader) return res.status(401).json({ error: "Missing Authorization header" });
+  // Accept key from Authorization header OR from X-Dust-Api-Key header
+  let apiKey = req.headers["x-dust-api-key"];
+  if (!apiKey) {
+    const authHeader = req.headers["authorization"] ?? "";
+    apiKey = authHeader.replace(/^Bearer\s+/i, "").trim();
+  }
+  if (!apiKey) return res.status(401).json({ error: "Missing Dust API key" });
 
   const dustUrl = `https://dust.tt/api/v1${decodeURIComponent(path)}`;
 
@@ -28,7 +33,7 @@ app.all("/api/dust", async (req, res) => {
       method: req.method === "OPTIONS" ? "GET" : req.method,
       headers: {
         "Content-Type": "application/json",
-        "Authorization": authHeader,
+        "Authorization": `Bearer ${apiKey}`,
       },
       body: req.method !== "GET" ? JSON.stringify(req.body) : undefined,
     });
